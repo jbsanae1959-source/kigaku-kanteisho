@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>気学鑑定書</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Hiragino Kaku Gothic Pro','Meiryo',sans-serif;background:#F5F3EE;color:#2C2C2A;min-height:100vh}
+.site-header{background:#2C2C2A;padding:14px 24px;display:flex;align-items:center;justify-content:space-between}
+.site-header h1{color:#EAE8FC;font-size:15px;font-weight:500;letter-spacing:0.2em}
+.site-header .ver{color:#888780;font-size:11px}
+.form-area{max-width:640px;margin:32px auto;padding:0 16px}
+.form-card{background:#fff;border:0.5px solid #D3D1C7;border-radius:12px;padding:24px}
+.form-card h2{font-size:14px;font-weight:500;color:#5F5E5A;letter-spacing:0.1em;margin-bottom:20px;padding-bottom:12px;border-bottom:0.5px solid #E8E6E0}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.field{display:flex;flex-direction:column;gap:5px}
+.field label{font-size:12px;color:#5F5E5A;font-weight:500}
+.required-mark{color:#A32D2D;font-size:10px;margin-left:4px}
+.field input,.field select{border:0.5px solid #D3D1C7;border-radius:8px;padding:8px 12px;font-size:14px;background:#fff;color:#2C2C2A;outline:none;font-family:inherit;-webkit-appearance:none}
+.field input:focus,.field select:focus{border-color:#534AB7;box-shadow:0 0 0 2px rgba(83,74,183,0.12)}
+.time-row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.btn-create{width:100%;margin-top:20px;padding:12px;background:#534AB7;color:#fff;border:none;border-radius:8px;font-size:15px;font-weight:500;letter-spacing:0.05em;cursor:pointer;font-family:inherit;transition:background 0.15s}
+.btn-create:hover{background:#3C3489}
+.btn-create:disabled{background:#B4B2A9;cursor:not-allowed}
+.error-msg{font-size:11px;color:#A32D2D;margin-top:2px;display:none}
+.loading-overlay{display:none;position:fixed;inset:0;background:rgba(44,44,42,0.5);z-index:100;align-items:center;justify-content:center;flex-direction:column;gap:16px}
+.loading-overlay.show{display:flex}
+.spinner{width:40px;height:40px;border:3px solid rgba(234,232,252,0.3);border-top-color:#EAE8FC;border-radius:50%;animation:spin 0.8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loading-text{color:#EAE8FC;font-size:14px;letter-spacing:0.05em}
+.kanteisho-area{max-width:720px;margin:0 auto 40px;padding:0 16px;display:none}
+.kanteisho-card{background:#fff;border:0.5px solid #D3D1C7;border-radius:12px;overflow:hidden}
+.kt-header{background:#2C2C2A;padding:20px 24px;text-align:center}
+.kt-header .kt-title{color:#EAE8FC;font-size:20px;font-weight:500;letter-spacing:0.35em}
+.kt-header .kt-name{color:#CECBF6;font-size:14px;margin-top:6px;letter-spacing:0.05em}
+.kt-header .kt-meta{color:#888780;font-size:12px;margin-top:3px}
+.kt-body{padding:24px}
+.kt-section-label{font-size:11px;font-weight:500;color:#888780;letter-spacing:0.1em;text-transform:uppercase;margin-bottom:8px}
+.kigaku-table{width:100%;border-collapse:collapse;font-size:12px;margin-bottom:24px}
+.kigaku-table th{background:#F1EFE8;font-weight:500;font-size:11px;color:#5F5E5A;padding:7px 8px;border:0.5px solid #D3D1C7;text-align:center;letter-spacing:0.05em}
+.kigaku-table td{padding:7px 8px;border:0.5px solid #D3D1C7;text-align:center;font-size:12px;color:#2C2C2A}
+.kigaku-table td.row-lbl{font-weight:500;background:#F1EFE8;color:#5F5E5A;font-size:11px;letter-spacing:0.05em}
+.kigaku-table td.star{color:#534AB7;font-weight:500}
+.kigaku-table td.hensei{color:#3B6D11;font-weight:500}
+.kigaku-table tr.keisha td{background:#EEEDFE}
+.kigaku-table tr.keisha td.row-lbl{background:#CECBF6;color:#3C3489}
+.text-block{margin-bottom:20px}
+.text-block .tb-label{font-size:12px;font-weight:500;color:#5F5E5A;margin-bottom:6px;display:flex;align-items:center;gap:6px}
+.ai-tag{background:#EAF3DE;color:#3B6D11;font-size:10px;padding:1px 7px;border-radius:4px;font-weight:500}
+.text-block .tb-body{font-size:13px;color:#2C2C2A;line-height:1.85;background:#F5F3EE;border-radius:8px;padding:12px 14px;border-left:2px solid #534AB7}
+.monthly-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-top:6px}
+.month-card{background:#F5F3EE;border-radius:8px;padding:10px 12px;border-left:2px solid #B4B2A9}
+.month-card.current{border-left-color:#534AB7}
+.month-card .mc-name{font-size:11px;color:#5F5E5A;font-weight:500;margin-bottom:5px}
+.month-card .mc-body{font-size:12px;color:#2C2C2A;line-height:1.7}
+.kt-actions{padding:16px 24px;border-top:0.5px solid #E8E6E0;display:flex;gap:10px}
+.btn-action{flex:1;padding:10px;border:0.5px solid #D3D1C7;border-radius:8px;background:#fff;font-size:13px;font-weight:500;cursor:pointer;font-family:inherit;color:#2C2C2A;transition:background 0.12s;display:flex;align-items:center;justify-content:center;gap:6px}
+.btn-action:hover{background:#F5F3EE}
+.btn-action.primary{background:#534AB7;color:#fff;border-color:#534AB7}
+.btn-action.primary:hover{background:#3C3489}
+.btn-back{margin:16px auto 0;display:block;background:none;border:none;font-size:13px;color:#888780;cursor:pointer;font-family:inherit;text-decoration:underline;text-underline-offset:2px}
+@media print{
+  body{background:#fff}
+  .site-header,.form-area,.kt-actions,.btn-back,.loading-overlay{display:none!important}
+  .kanteisho-area{display:block!important;margin:0;padding:0;max-width:100%}
+  .kanteisho-card{border:none;border-radius:0}
+  .kt-header{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .kigaku-table th,.kigaku-table td.row-lbl,.kigaku-table tr.keisha td{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+}
+@media(max-width:520px){
+  .form-grid{grid-template-columns:1fr}
+  .monthly-grid{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+
+<header class="site-header">
+  <h1>気学鑑定書</h1>
+  <span class="ver">v1.0</span>
+</header>
+
+<div class="form-area" id="formArea">
+  <div class="form-card">
+    <h2>鑑定情報の入力</h2>
+    <div class="form-grid">
+      <div class="field" style="grid-column:1/-1">
+        <label>お名前又はニックネーム<span class="required-mark">必須</span></label>
+        <input type="text" id="name" placeholder="例）山田 花子" maxlength="30">
+        <span class="error-msg" id="err-name">お名前を入力してください</span>
+      </div>
+      <div class="field">
+        <label>性別<span class="required-mark">必須</span></label>
+        <select id="gender">
+          <option value="">選択してください</option>
+          <option value="female">女性</option>
+          <option value="male">男性</option>
+        </select>
+        <span class="error-msg" id="err-gender">性別を選択してください</span>
+      </div>
+      <div class="field">
+        <label>生年月日<span class="required-mark">必須</span></label>
+        <input type="date" id="birthdate" min="1926-02-01" max="2060-12-15">
+        <span class="error-msg" id="err-birthdate">生年月日を入力してください</span>
+      </div>
+      <div class="field" style="grid-column:1/-1">
+        <label>生時（生まれた時間）<span style="color:#888780;font-size:10px;margin-left:6px">任意</span></label>
+        <select id="birth-jikan">
+          <option value="">不明・未入力</option>
+          <option value="23">23:00〜1:00</option>
+          <option value="1">1:00〜3:00</option>
+          <option value="3">3:00〜5:00</option>
+          <option value="5">5:00〜7:00</option>
+          <option value="7">7:00〜9:00</option>
+          <option value="9">9:00〜11:00</option>
+          <option value="11">11:00〜13:00</option>
+          <option value="13">13:00〜15:00</option>
+          <option value="15">15:00〜17:00</option>
+          <option value="17">17:00〜19:00</option>
+          <option value="19">19:00〜21:00</option>
+          <option value="21">21:00〜23:00</option>
+        </select>
+      </div>
+    </div>
+    <button class="btn-create" id="btnCreate" onclick="createKanteisho()">鑑定書を作成する</button>
+  </div>
+</div>
+
+<div class="loading-overlay" id="loadingOverlay">
+  <div class="spinner"></div>
+  <div class="loading-text">AIが鑑定文を生成中...</div>
+</div>
+
+<div class="kanteisho-area" id="kanteishoArea">
+  <div class="kanteisho-card">
+    <div class="kt-header">
+      <div class="kt-title">気　学　鑑　定　書</div>
+      <div class="kt-name" id="kt-name"></div>
+      <div class="kt-meta" id="kt-meta"></div>
+    </div>
+    <div class="kt-body">
+      <div class="kt-section-label">九星気学 鑑定表</div>
+      <table class="kigaku-table">
+        <thead>
+          <tr>
+            <th style="width:13%"></th>
+            <th style="width:20%">九　星</th>
+            <th style="width:10%">十干</th>
+            <th style="width:12%">十二支</th>
+            <th style="width:20%">通変星</th>
+            <th style="width:25%">十二運</th>
+          </tr>
+        </thead>
+        <tbody id="kigakuTbody"></tbody>
+      </table>
+      <div class="text-block">
+        <div class="tb-label">性格の特徴 <span class="ai-tag">AI生成</span></div>
+        <div class="tb-body" id="txt-seikaku"></div>
+      </div>
+      <div class="text-block">
+        <div class="tb-label">仕事運気特徴 <span class="ai-tag">AI生成</span></div>
+        <div class="tb-body" id="txt-shigoto"></div>
+      </div>
+      <div class="text-block">
+        <div class="tb-label">2026年の運気 <span class="ai-tag">AI生成</span></div>
+        <div class="tb-body" id="txt-2026"></div>
+      </div>
+      <div class="text-block">
+        <div class="tb-label">月別運気 <span class="ai-tag">AI生成</span></div>
+        <div class="monthly-grid" id="monthlyGrid"></div>
+      </div>
+    </div>
+    <div class="kt-actions">
+      <button class="btn-action" onclick="window.print()">🖨 印刷</button>
+      <button class="btn-action primary" onclick="savePDF()">PDF保存</button>
+    </div>
+  </div>
+  <button class="btn-back" onclick="goBack()">← 新しい鑑定をする</button>
+</div>
+
+<script>
+// ===== 万年暦DB（外部JSONから読み込み）=====
+let MANNEN_DB = null;
+
+async function loadDB() {
+  if (MANNEN_DB) return;
+  const res = await fetch('mannen.json');
+  MANNEN_DB = await res.json();
+}
+
+// 日付キー生成
+function dateKey(year, month, day) {
+  return `${year}-${String(month).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+}
+
+// ===== 通変星 =====
+const TSUHEN_MAP = {
+  '甲甲':'比肩','甲乙':'劫財','甲丙':'食神','甲丁':'傷官','甲戊':'偏財','甲己':'正財','甲庚':'偏官','甲辛':'正官','甲壬':'偏印','甲癸':'印綬',
+  '乙甲':'劫財','乙乙':'比肩','乙丙':'傷官','乙丁':'食神','乙戊':'正財','乙己':'偏財','乙庚':'正官','乙辛':'偏官','乙壬':'印綬','乙癸':'偏印',
+  '丙丙':'比肩','丙丁':'劫財','丙戊':'食神','丙己':'傷官','丙庚':'偏財','丙辛':'正財','丙壬':'偏官','丙癸':'正官','丙甲':'印綬','丙乙':'偏印',
+  '丁丙':'劫財','丁丁':'比肩','丁戊':'傷官','丁己':'食神','丁庚':'正財','丁辛':'偏財','丁壬':'正官','丁癸':'偏官','丁甲':'偏印','丁乙':'印綬',
+  '戊戊':'比肩','戊己':'劫財','戊庚':'食神','戊辛':'傷官','戊壬':'偏財','戊癸':'正財','戊甲':'偏官','戊乙':'正官','戊丙':'印綬','戊丁':'偏印',
+  '己戊':'劫財','己己':'比肩','己庚':'傷官','己辛':'食神','己壬':'正財','己癸':'偏財','己甲':'正官','己乙':'偏官','己丙':'偏印','己丁':'印綬',
+  '庚庚':'比肩','庚辛':'劫財','庚壬':'食神','庚癸':'傷官','庚甲':'偏財','庚乙':'正財','庚丙':'偏官','庚丁':'正官','庚戊':'印綬','庚己':'偏印',
+  '辛庚':'劫財','辛辛':'比肩','辛壬':'傷官','辛癸':'食神','辛甲':'正財','辛乙':'偏財','辛丙':'正官','辛丁':'偏官','辛戊':'偏印','辛己':'印綬',
+  '壬壬':'比肩','壬癸':'劫財','壬甲':'食神','壬乙':'傷官','壬丙':'偏財','壬丁':'正財','壬戊':'偏官','壬己':'正官','壬庚':'印綬','壬辛':'偏印',
+  '癸壬':'劫財','癸癸':'比肩','癸甲':'傷官','癸乙':'食神','癸丙':'正財','癸丁':'偏財','癸戊':'正官','癸己':'偏官','癸庚':'偏印','癸辛':'印綬',
+};
+
+// ===== 十二運 =====
+const JUNIIN_MAP = {
+  '甲亥':'長生','甲子':'沐浴','甲丑':'冠帯','甲寅':'建禄','甲卯':'帝旺','甲辰':'衰','甲巳':'病','甲午':'死','甲未':'墓','甲申':'絶','甲酉':'胎','甲戌':'養',
+  '乙午':'長生','乙巳':'沐浴','乙辰':'冠帯','乙卯':'建禄','乙寅':'帝旺','乙丑':'衰','乙子':'病','乙亥':'死','乙戌':'墓','乙酉':'絶','乙申':'胎','乙未':'養',
+  '丙寅':'長生','丙卯':'沐浴','丙辰':'冠帯','丙巳':'建禄','丙午':'帝旺','丙未':'衰','丙申':'病','丙酉':'死','丙戌':'墓','丙亥':'絶','丙子':'胎','丙丑':'養',
+  '丁酉':'長生','丁申':'沐浴','丁未':'冠帯','丁午':'建禄','丁巳':'帝旺','丁辰':'衰','丁卯':'病','丁寅':'死','丁丑':'墓','丁子':'絶','丁亥':'胎','丁戌':'養',
+  '戊寅':'長生','戊卯':'沐浴','戊辰':'冠帯','戊巳':'建禄','戊午':'帝旺','戊未':'衰','戊申':'病','戊酉':'死','戊戌':'墓','戊亥':'絶','戊子':'胎','戊丑':'養',
+  '己酉':'長生','己申':'沐浴','己未':'冠帯','己午':'建禄','己巳':'帝旺','己辰':'衰','己卯':'病','己寅':'死','己丑':'墓','己子':'絶','己亥':'胎','己戌':'養',
+  '庚巳':'長生','庚午':'沐浴','庚未':'冠帯','庚申':'建禄','庚酉':'帝旺','庚戌':'衰','庚亥':'病','庚子':'死','庚丑':'墓','庚寅':'絶','庚卯':'胎','庚辰':'養',
+  '辛子':'長生','辛亥':'沐浴','辛戌':'冠帯','辛酉':'建禄','辛申':'帝旺','辛未':'衰','辛午':'病','辛巳':'死','辛辰':'墓','辛卯':'絶','辛寅':'胎','辛丑':'養',
+  '壬申':'長生','壬酉':'沐浴','壬戌':'冠帯','壬亥':'建禄','壬子':'帝旺','壬丑':'衰','壬寅':'病','壬卯':'死','壬辰':'墓','壬巳':'絶','壬午':'胎','壬未':'養',
+  '癸卯':'長生','癸寅':'沐浴','癸丑':'冠帯','癸子':'建禄','癸亥':'帝旺','癸戌':'衰','癸酉':'病','癸申':'死','癸未':'墓','癸午':'絶','癸巳':'胎','癸辰':'養',
+};
+function getJuniin(kan, shi) { return JUNIIN_MAP[kan+shi] || '―'; }
+function getTsuhen(nichiKan, targetKan) { return TSUHEN_MAP[nichiKan+targetKan] || '―'; }
+
+// ===== 傾斜・蔵気・空亡 =====
+const KYUSEI = ['一白水星','二黒土星','三碧木星','四縁木星','五黄土星','六白金星','七赤金星','八白土星','九紫火星'];
+function getKeisha(nenStar, getsuStar) {
+  const row = KEISHA_TABLE[nenStar];
+  if (!row) return '―';
+  const idx = KYUSEI_IDX.indexOf(getsuStar);
+  return idx >= 0 ? row[idx] : '―';
+}
+function getZokki(nenStar, getsuStar) {
+  const row = ZOKKI_TABLE[nenStar];
+  if (!row) return '―';
+  return row[getsuStar] || '―';
+}
+
+// 蔵気テーブル（行=生年星、列=生月星）
+const ZOKKI_TABLE = {
+  '一白水星':{'一白水星':'無し','二黒土星':'六白金星','三碧木星':'二黒土星','四縁木星':'七赤金星','五黄土星':'三碧木星','六白金星':'八白土星','七赤金星':'四縁木星','八白土星':'九紫火星','九紫火星':'五黄土星'},
+  '二黒土星':{'一白水星':'六白金星','二黒土星':'無し','三碧木星':'七赤金星','四縁木星':'三碧木星','五黄土星':'八白土星','六白金星':'四縁木星','七赤金星':'九紫火星','八白土星':'五黄土星','九紫火星':'一白水星'},
+  '三碧木星':{'一白水星':'二黒土星','二黒土星':'七赤金星','三碧木星':'無し','四縁木星':'八白土星','五黄土星':'四縁木星','六白金星':'九紫火星','七赤金星':'五黄土星','八白土星':'一白水星','九紫火星':'六白金星'},
+  '四縁木星':{'一白水星':'七赤金星','二黒土星':'三碧木星','三碧木星':'八白土星','四縁木星':'無し','五黄土星':'九紫火星','六白金星':'五黄土星','七赤金星':'一白水星','八白土星':'六白金星','九紫火星':'二黒土星'},
+  '五黄土星':{'一白水星':'三碧木星','二黒土星':'八白土星','三碧木星':'四縁木星','四縁木星':'九紫火星','五黄土星':'無し','六白金星':'一白水星','七赤金星':'六白金星','八白土星':'二黒土星','九紫火星':'七赤金星'},
+  '六白金星':{'一白水星':'八白土星','二黒土星':'四縁木星','三碧木星':'九紫火星','四縁木星':'五黄土星','五黄土星':'一白水星','六白金星':'無し','七赤金星':'二黒土星','八白土星':'七赤金星','九紫火星':'三碧木星'},
+  '七赤金星':{'一白水星':'四縁木星','二黒土星':'九紫火星','三碧木星':'五黄土星','四縁木星':'一白水星','五黄土星':'六白金星','六白金星':'二黒土星','七赤金星':'無し','八白土星':'三碧木星','九紫火星':'八白土星'},
+  '八白土星':{'一白水星':'九紫火星','二黒土星':'五黄土星','三碧木星':'一白水星','四縁木星':'六白金星','五黄土星':'二黒土星','六白金星':'七赤金星','七赤金星':'三碧木星','八白土星':'無し','九紫火星':'四縁木星'},
+  '九紫火星':{'一白水星':'五黄土星','二黒土星':'一白水星','三碧木星':'六白金星','四縁木星':'二黒土星','五黄土星':'七赤金星','六白金星':'三碧木星','七赤金星':'八白土星','八白土星':'四縁木星','九紫火星':'無し'},
+};
+
+// 傾斜テーブル（行=生月星、列インデックス=生年星）
+const KEISHA_TABLE = {
+  '九紫火星':['四縁木星','三碧木星','二黒土星','一白水星','九紫火星','八白土星','七赤金星','六白金星','四縁木星'],
+  '八白土星':['三碧木星','二黒土星','一白水星','九紫火星','八白土星','七赤金星','六白金星','六白金星','四縁木星'],
+  '七赤金星':['二黒土星','一白水星','九紫火星','八白土星','七赤金星','六白金星','四縁木星','四縁木星','三碧木星'],
+  '六白金星':['一白水星','九紫火星','八白土星','七赤金星','六白金星','九紫火星','四縁木星','三碧木星','二黒土星'],
+  '五黄土星':['九紫火星','八白土星','七赤金星','六白金星','無し','四縁木星','三碧木星','二黒土星','一白水星'],
+  '四縁木星':['八白土星','七赤金星','六白金星','六白金星','四縁木星','三碧木星','二黒土星','一白水星','九紫火星'],
+  '三碧木星':['七赤金星','六白金星','六白金星','四縁木星','三碧木星','二黒土星','一白水星','九紫火星','八白土星'],
+  '二黒土星':['六白金星','四縁木星','四縁木星','三碧木星','二黒土星','一白水星','九紫火星','八白土星','七赤金星'],
+  '一白水星':['六白金星','四縁木星','三碧木星','二黒土星','一白水星','九紫火星','八白土星','七赤金星','六白金星'],
+};
+const KYUSEI_IDX = ['一白水星','二黒土星','三碧木星','四縁木星','五黄土星','六白金星','七赤金星','八白土星','九紫火星'];
+
+const KUBO_MAP = {
+  '甲子':'戌亥','乙丑':'戌亥','丙寅':'戌亥','丁卯':'戌亥','戊辰':'戌亥','己巳':'戌亥','庚午':'戌亥','辛未':'戌亥','壬申':'戌亥','癸酉':'戌亥',
+  '甲戌':'申酉','乙亥':'申酉','丙子':'申酉','丁丑':'申酉','戊寅':'申酉','己卯':'申酉','庚辰':'申酉','辛巳':'申酉','壬午':'申酉','癸未':'申酉',
+  '甲申':'午未','乙酉':'午未','丙戌':'午未','丁亥':'午未','戊子':'午未','己丑':'午未','庚寅':'午未','辛卯':'午未','壬辰':'午未','癸巳':'午未',
+  '甲午':'辰巳','乙未':'辰巳','丙申':'辰巳','丁酉':'辰巳','戊戌':'辰巳','己亥':'辰巳','庚子':'辰巳','辛丑':'辰巳','壬寅':'辰巳','癸卯':'辰巳',
+  '甲辰':'寅卯','乙巳':'寅卯','丙午':'寅卯','丁未':'寅卯','戊申':'寅卯','己酉':'寅卯','庚戌':'寅卯','辛亥':'寅卯','壬子':'寅卯','癸丑':'寅卯',
+  '甲寅':'子丑','乙卯':'子丑','丙辰':'子丑','丁巳':'子丑','戊午':'子丑','己未':'子丑','庚申':'子丑','辛酉':'子丑','壬戌':'子丑','癸亥':'子丑',
+};
+
+// ===== 生時の算出（Aタイプ：表1・表2使用）=====
+const JUNISHI_JIKAN = ['子','丑','寅','卯','辰','巳','午','未','申','酉','戌','亥'];
+const KYUSEI_LIST = ['','一白水星','二黒土星','三碧木星','四縁木星','五黄土星','六白金星','七赤金星','八白土星','九紫火星'];
+
+// 表1：時盤九星（陽遁）
+const YOTON = {
+  '147': [1,2,3,4,5,6,7,8,9,1,2,3],
+  '258': [4,5,6,7,8,9,1,2,3,4,5,6],
+  '369': [7,8,9,1,2,3,4,5,6,7,8,9],
+};
+// 表1：時盤九星（陰遁）
+const INTON = {
+  '147': [3,2,1,9,8,7,6,5,4,3,2,1],
+  '258': [6,5,4,3,2,1,9,8,7,6,5,4],
+  '369': [9,8,7,6,5,4,3,2,1,9,8,7],
+};
+
+// 表2：時の十干
+const TOKI_KAN = {
+  '甲己': ['甲','乙','丙','丁','戊','己','庚','辛','壬','癸','壬','癸'],
+  '乙庚': ['丙','丁','戊','己','庚','辛','壬','癸','甲','乙','甲','乙'],
+  '丙辛': ['戊','己','庚','辛','壬','癸','甲','乙','丙','丁','丙','丁'],
+  '丁壬': ['庚','辛','壬','癸','甲','乙','丙','丁','戊','己','戊','己'],
+  '戊癸': ['壬','癸','甲','乙','丙','丁','戊','己','庚','辛','庚','辛'],
+};
+
+// 時間帯→十二支
+function jikanToShi(jikanVal) {
+  const map = {'23':'子','1':'丑','3':'寅','5':'卯','7':'辰','9':'巳','11':'午','13':'未','15':'申','17':'酉','19':'戌','21':'亥'};
+  return map[String(jikanVal)] || null;
+}
+
+// 生日九星→列グループ
+function getStarGroup(star) {
+  if (['一白水星','四縁木星','七赤金星'].includes(star)) return '147';
+  if (['二黒土星','五黄土星','八白土星'].includes(star)) return '258';
+  return '369';
+}
+
+// 生日十干→干グループ
+function getKanGroup(kan) {
+  if (['甲','己'].includes(kan)) return '甲己';
+  if (['乙','庚'].includes(kan)) return '乙庚';
+  if (['丙','辛'].includes(kan)) return '丙辛';
+  if (['丁','壬'].includes(kan)) return '丁壬';
+  return '戊癸';
+}
+
+// Bタイプ：生年の星と性別から親星を取得
+const B_TYPE_MAP = {
+  '一白水星': { male: '六白金星', female: '七赤金星' },
+  '二黒土星': { male: '九紫火星', female: '九紫火星' },
+  '三碧木星': { male: '一白水星', female: '一白水星' },
+  '四縁木星': { male: '一白水星', female: '一白水星' },
+  '五黄土星': { male: '九紫火星', female: '九紫火星' },
+  '六白金星': { male: '八白土星', female: '二黒土星' },
+  '七赤金星': { male: '八白土星', female: '二黒土星' },
+  '八白土星': { male: '九紫火星', female: '九紫火星' },
+  '九紫火星': { male: '三碧木星', female: '四縁木星' },
+};
+
+function getTimeData(jikanVal, nichiStar, nichiKan, inyo, nenStar, gender) {
+  // Aタイプ：生時あり
+  if (jikanVal && jikanVal !== '') {
+    const shi = jikanToShi(jikanVal);
+    if (!shi) return { star: '―', kan: '―', shi: '―' };
+    const shiIdx = JUNISHI_JIKAN.indexOf(shi);
+    const grp = getStarGroup(nichiStar);
+    const table = inyo === '陰' ? INTON : YOTON;
+    const starNum = table[grp][shiIdx];
+    const star = KYUSEI_LIST[starNum];
+    const kanGrp = getKanGroup(nichiKan);
+    const kan = TOKI_KAN[kanGrp][shiIdx];
+    return { star, kan, shi };
+  }
+
+  // Bタイプ：生時なし
+  const genderKey = gender === 'male' ? 'male' : 'female';
+  const bMap = B_TYPE_MAP[nenStar];
+  if (!bMap) return { star: '―', kan: '―', shi: '―' };
+  const oyaStar = bMap[genderKey]; // 親星
+
+  // 親星のグループで表1を引く
+  const grp = getStarGroup(oyaStar);
+  const table = inyo === '陰' ? INTON : YOTON;
+
+  // 親星の番号から十二支インデックスを逆引き
+  const oyaNum = KYUSEI_LIST.indexOf(oyaStar);
+  if (oyaNum < 0) return { star: '―', kan: '―', shi: '―' };
+  const starNums = table[grp];
+  const shiIdx = starNums.indexOf(oyaNum);
+  if (shiIdx < 0) return { star: '―', kan: '―', shi: '―' };
+
+  const shi = JUNISHI_JIKAN[shiIdx];
+  const star = oyaStar;
+  const kanGrp = getKanGroup(nichiKan);
+  const kan = TOKI_KAN[kanGrp][shiIdx];
+  return { star, kan, shi };
+}
+
+// ===== メイン処理 =====
+async function createKanteisho() {
+  const name = document.getElementById('name').value.trim();
+  const gender = document.getElementById('gender').value;
+  const birthdate = document.getElementById('birthdate').value;
+  const jikanVal = document.getElementById('birth-jikan').value;
+
+  let valid = true;
+  const setErr = (id, show) => {
+    document.getElementById(id).style.display = show ? 'block' : 'none';
+    if(show) valid = false;
+  };
+  setErr('err-name', !name);
+  setErr('err-gender', !gender);
+  setErr('err-birthdate', !birthdate);
+  if (!valid) return;
+
+  const [year, month, day] = birthdate.split('-').map(Number);
+
+  // 万年暦DB読み込み
+  document.getElementById('loadingOverlay').classList.add('show');
+  document.getElementById('btnCreate').disabled = true;
+
+  try {
+    await loadDB();
+  } catch(e) {
+    document.getElementById('loadingOverlay').classList.remove('show');
+    document.getElementById('btnCreate').disabled = false;
+    alert('万年暦データの読み込みに失敗しました。\nmannen.jsonが見つかりません。\nエラー: ' + e.message);
+    return;
+  }
+
+  // 万年暦からデータ取得
+  const key = dateKey(year, month, day);
+  const db = MANNEN_DB[key];
+  if (!db) {
+    alert(`${year}年${month}月${day}日のデータが見つかりません。\n対応範囲：1926年2月1日〜2060年12月15日`);
+    document.getElementById('loadingOverlay').classList.remove('show');
+    document.getElementById('btnCreate').disabled = false;
+    return;
+  }
+
+  // DBから取得
+  const [nenStar, nenKan, nenShi, getsuStar, getsuKan, getsuShi, nichiStar, nichiKan, nichiShi] = db;
+
+  // 生時（表1・表2から算出）
+  const inyo = db[9] || '陽'; // 万年暦DBの陰陽
+  const toki = getTimeData(jikanVal, nichiStar, nichiKan, inyo, nenStar, gender);
+
+  // 通変星（日干基準）
+  const nenTsuhen  = getTsuhen(nichiKan, nenKan);
+  const getsuTsuhen = getTsuhen(nichiKan, getsuKan);
+  const tokiTsuhen  = getTsuhen(nichiKan, toki.kan !== '🌸' ? toki.kan : nichiKan);
+
+  // 十二運
+  const nenJuniin   = getJuniin(nenKan, nenShi);
+  const getsuJuniin = getJuniin(getsuKan, getsuShi);
+  const nichiJuniin = getJuniin(nichiKan, nichiShi);
+  const tokiJuniin  = toki.kan !== '🌸' ? getJuniin(toki.kan, toki.shi) : '🌸🌸🌸';
+
+  // 傾斜・蔵気・空亡
+  const keisha = getKeisha(nenStar, getsuStar);
+  const zokki  = getZokki(nenStar, getsuStar);
+  const kubo   = KUBO_MAP[nichiKan + nichiShi] || '―';
+
+  // 表示情報
+  const timeStr   = jikanVal !== '' ? jikanVal + ':00〜' : '生時不明';
+  const genderStr = gender === 'female' ? '女性' : '男性';
+  const dateStr   = `${year}年${month}月${day}日`;
+
+  document.getElementById('kt-name').textContent = `${name} 様`;
+  document.getElementById('kt-meta').textContent = `${dateStr}生　${timeStr}　${genderStr}`;
+
+  // 鑑定表
+  document.getElementById('kigakuTbody').innerHTML = `
+    <tr>
+      <td class="row-lbl">生年</td>
+      <td class="star">${nenStar}</td>
+      <td>${nenKan}</td><td>${nenShi}</td>
+      <td class="hensei">${nenTsuhen}</td><td>${nenJuniin}</td>
+    </tr>
+    <tr>
+      <td class="row-lbl">生月</td>
+      <td class="star">${getsuStar}</td>
+      <td>${getsuKan}</td><td>${getsuShi}</td>
+      <td class="hensei">${getsuTsuhen}</td><td>${getsuJuniin}</td>
+    </tr>
+    <tr>
+      <td class="row-lbl">生日</td>
+      <td class="star">${nichiStar}</td>
+      <td>${nichiKan}</td><td>${nichiShi}</td>
+      <td class="hensei" style="color:#888780;font-size:11px">―</td><td>${nichiJuniin}</td>
+    </tr>
+    <tr>
+      <td class="row-lbl">生時</td>
+      <td class="star">${toki.star}</td>
+      <td>${toki.kan}</td><td>${toki.shi}</td>
+      <td class="hensei">${tokiTsuhen}</td><td>${tokiJuniin}</td>
+    </tr>
+    <tr class="keisha">
+      <td class="row-lbl">傾斜</td>
+      <td class="star" colspan="2">${keisha}</td>
+      <td style="font-size:11px;color:#5F5E5A">蔵気</td>
+      <td class="star">${zokki}</td>
+      <td style="font-size:11px">空亡　${kubo}</td>
+    </tr>
+  `;
+
+  // 🌸 文章生成（プレースホルダー）
+  generateAIText({ name, genderStr, dateStr, timeStr,
+    nenStar, getsuStar, nichiStar, toki,
+    nenKan, getsuKan, nichiKan,
+    nenTsuhen, getsuTsuhen, keisha, kubo });
+  document.getElementById('formArea').style.display = 'none';
+  document.getElementById('kanteishoArea').style.display = 'block';
+  document.getElementById('loadingOverlay').classList.remove('show');
+  window.scrollTo(0, 0);
+}
+
+async function generateAIText(d) {
+  const months = ['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'];
+  const m0 = new Date().getMonth();
+  const m1 = (m0+1)%12, m2 = (m0+2)%12;
+
+  // 🌸 AI文章生成（後ほど追加）
+  const placeholder = '🌸 ここに鑑定文章が入ります 🌸';
+  document.getElementById('txt-seikaku').textContent = placeholder;
+  document.getElementById('txt-shigoto').textContent = placeholder;
+  document.getElementById('txt-2026').textContent    = placeholder;
+
+  document.getElementById('monthlyGrid').innerHTML = 
+    '<div class="month-card current"><div class="mc-name">今月（' + months[m0] + '）</div><div class="mc-body">🌸 今月の運気 🌸</div></div>' +
+    '<div class="month-card"><div class="mc-name">来月（' + months[m1] + '）</div><div class="mc-body">🌸 来月の運気 🌸</div></div>' +
+    '<div class="month-card"><div class="mc-name">翌々月（' + months[m2] + '）</div><div class="mc-body">🌸 翌々月の運気 🌸</div></div>';
+}
+
+function goBack() {
+  document.getElementById('kanteishoArea').style.display = 'none';
+  document.getElementById('formArea').style.display = 'block';
+  document.getElementById('btnCreate').disabled = false;
+  window.scrollTo(0, 0);
+}
+
+function savePDF() {
+  alert('印刷ダイアログで「PDFとして保存」を選んでください。');
+  window.print();
+}
+</script>
+</body>
+</html>
