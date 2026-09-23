@@ -416,12 +416,29 @@ body:has(#formArea:not([style*="display: none"]):not([style*="display:none"])) .
   }
 }
 
+
+/* 2026-09-24｜入力画面の簡素化＋総合メニュー戻り動線 */
+body:has(#formArea:not([style*="display: none"]):not([style*="display:none"])) {
+  background:linear-gradient(135deg,#fffaf1 0%,#fff7f0 48%,#f8f1fb 100%) !important;
+}
+body:has(#formArea:not([style*="display: none"]):not([style*="display:none"]))::before,
+body:has(#formArea:not([style*="display: none"]):not([style*="display:none"]))::after {display:none !important;}
+body:has(#formArea:not([style*="display: none"]):not([style*="display:none"])) .real-hero {
+  background:linear-gradient(90deg,#fffaf0 0%,#fff5ed 52%,#f6effb 100%) !important;
+}
+body:has(#formArea:not([style*="display: none"]):not([style*="display:none"])) .hero-art-mountain {display:none !important;}
+.site-header .menu-return{margin-left:auto;text-decoration:none;color:#5b376f;background:#fff8ef;border:1px solid #dcc9df;border-radius:999px;padding:9px 16px;font-size:12px;font-weight:700;letter-spacing:.04em;box-shadow:0 3px 10px rgba(82,54,95,.06);white-space:nowrap;}
+.site-header .menu-return:hover{background:#f7edf8;}
+.site-header .ver{margin-left:10px;}
+body:has(#kanteishoArea[style*="display: block"]) .menu-return,body:has(#kanteishoArea[style*="display:block"]) .menu-return{display:none !important;}
+@media(max-width:560px){.site-header .menu-return{padding:8px 11px;font-size:10px}.site-header .ver{display:none}}
 </style>
 </head>
 <body>
 
 <header class="site-header">
   <h1>翔氣塾 <small>SHOKI JUKU</small></h1><div class="head-copy">人生の流れを知り、<br>自分らしく生きる力を育てる</div>
+  <a class="menu-return" href="https://sensational-pothos-af298f.netlify.app/">メニュー画面に戻る</a>
   <span class="ver">v1.0</span>
 </header>
 
