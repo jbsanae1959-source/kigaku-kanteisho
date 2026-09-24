@@ -432,6 +432,19 @@ body:has(#formArea:not([style*="display: none"]):not([style*="display:none"])) .
 .site-header .ver{margin-left:10px;}
 body:has(#kanteishoArea[style*="display: block"]) .menu-return,body:has(#kanteishoArea[style*="display:block"]) .menu-return{display:none !important;}
 @media(max-width:560px){.site-header .menu-return{padding:8px 11px;font-size:10px}.site-header .ver{display:none}}
+
+/* 2026-09-24｜Android実機：生年月日の表示切れ確認用
+   対象はスマホの #birthdate の表示だけ。鑑定ロジック・PC・他項目は変更しない。 */
+@media (max-width:560px){
+  #birthdate{
+    width:100% !important;
+    min-width:0 !important;
+    font-size:13px !important;
+    padding-left:8px !important;
+    padding-right:8px !important;
+  }
+}
+
 </style>
 </head>
 <body>
