@@ -750,7 +750,7 @@ const KUBO_MAP = {
   '甲寅':'子丑','乙卯':'子丑','丙辰':'子丑','丁巳':'子丑','戊午':'子丑','己未':'子丑','庚申':'子丑','辛酉':'子丑','壬戌':'子丑','癸亥':'子丑',
 };
 
-// ===== 生時の算出（Aタイプ：表1・表2使用）=====
+// ===== 使命の算出（Aタイプ：出生時間あり／Bタイプ：出生時間不明）=====
 const JUNISHI_JIKAN = ['子','丑','寅','卯','辰','巳','午','未','申','酉','戌','亥'];
 const KYUSEI_LIST = ['','一白水星','二黒土星','三碧木星','四縁木星','五黄土星','六白金星','七赤金星','八白土星','九紫火星'];
 
@@ -832,8 +832,8 @@ function getTimeData(jikanVal, nichiStar, nichiKan, inyo, nenStar, gender) {
   if (!bMap) return { star: '―', kan: '―', shi: '―' };
   const oyaStar = bMap[genderKey]; // 親星
 
-  // 親星のグループで表1を引く
-  const grp = getStarGroup(oyaStar);
+  // 生日の星のグループで表1を引き、その列から親星の番号を探す
+  const grp = getStarGroup(nichiStar);
   const table = inyo === '陰' ? INTON : YOTON;
 
   // 親星の番号から十二支インデックスを逆引き
@@ -945,7 +945,7 @@ async function createKanteisho() {
       <td class="hensei" style="color:#888780;font-size:11px">―</td><td>${nichiJuniin}</td>
     </tr>
     <tr>
-      <td class="row-lbl">生時</td>
+      <td class="row-lbl">使命</td>
       <td class="star">${toki.star}</td>
       <td>${toki.kan}</td><td>${toki.shi}</td>
       <td class="hensei">${tokiTsuhen}</td><td>${tokiJuniin}</td>
@@ -976,16 +976,79 @@ async function loadDB() {
 
 
 const UNKI_2026 = {
-  '一白水星': '進化の為の一念発起運気',
-  '二黒土星': '調整して念願始動運気',
-  '三碧木星': '周りと楽しく活躍発展運気',
-  '四縁木星': 'いい情報収集で人脈拡大運気',
-  '五黄土星': '周りの強力で自力転換運気',
-  '六白金星': '価値の創造運気',
-  '七赤金星': '経済確認で金運向上運気',
-  '八白土星': '希望に向かい進む運気',
-  '九紫火星': '純粋に自己確認運気',
+  '一白水星': '周りに合わせてばかりでは、自分の道を見失う年です。考えすぎて動けなくなる前に、五黄土星の「自分で決めて動かす力」を使ってください。人の顔色ではなく、自分はどうしたいのかを決めること。腹を決めて一歩踏み出せば、あなたらしい流れを自分でつくれます。',
+  '二黒土星': '待っているだけでは、今年は何も変わりません。二黒土星の粘り強さは大切ですが、慎重になりすぎると機会を逃します。六白金星の「決断して前へ進む力」を借りて、期限を決めて動いてください。決めるべきところで決めることが、大きな前進につながります。',
+  '三碧木星': '勢いだけで走ると、人がついてこなくなる年です。思いついたらすぐ動けるのは強みですが、今年は七赤金星の「人と楽しくつながる力」を使ってください。自分が話すだけでなく、相手の反応を見て、会話を楽しむこと。人とのつながりが、あなたの勢いを本当の成果に変えてくれます。',
+  '四縁木星': '周りを気にして決められないままでは、前へ進めません。調整ばかりに時間を使わず、八白土星の「区切りをつけ、変える力」を使ってください。続けるものと終わらせるものをはっきり決めること。ひとつ区切ることで、次の流れが始まります。',
+  '五黄土星': '曖昧なまま進めないことが大切な年です。自分の考えだけで押し切るのではなく、九紫火星の「物事を明確にする力」を使ってください。何をするのか、何をやめるのかをはっきりさせ、それを周りにきちんと伝えること。その明確さが、あなたの強さを活かし、新たな一歩につながります。',
+  '六白金星': '自分の正しさだけで決めると、今年は大事なものを見落とします。答えを急がず、一白水星の「冷静に見て、流れを読む力」を使ってください。まず聞く、よく見る、状況が動くのを待つ。力で進めるより流れをつかむことで、あなたの決断力がもっと活きてきます。',
+  '七赤金星': '楽しいことや目の前の結果ばかり追うと、大切なものが育ちません。今年は二黒土星の「待つ力・育てる力」を使ってください。すぐに成果を求めず、時間をかけ、人にも任せること。地道に積み上げたものが、後から大きな実りになって返ってきます。',
+  '八白土星': '考えているだけでは、何も始まらない年です。慎重になりすぎて動きを止めるより、三碧木星の「まず一歩を踏み出す力」を使ってください。完璧になってからではなく、まず始めること。動きながら考えるくらいでちょうどよく、その一歩が新しい流れをつくります。',
+  '九紫火星': '自分の評価や見え方ばかり気にすると、本当に伝えたいものが届かなくなります。今年は四緑木星の「人と人をつなぎ、調和させる力」を使ってください。自分を目立たせるより、相手にどう届くかを考えて伝えること。人との関係を整えることで、あなたの才能や魅力が自然に広がっていきます。',
 };
+
+
+// ===== 2026-09-26｜月別運気・同会計算テスト =====
+// 月盤の飛泊順：中宮 → 乾 → 兌 → 艮 → 離 → 坎 → 坤 → 震 → 巽
+// 各宮の後天定位星：五黄 → 六白 → 七赤 → 八白 → 九紫 → 一白 → 二黒 → 三碧 → 四緑
+const DOUKAI_STAR_NUM = {
+  '一白水星':1, '二黒土星':2, '三碧木星':3, '四縁木星':4,
+  '五黄土星':5, '六白金星':6, '七赤金星':7, '八白土星':8, '九紫火星':9
+};
+const DOUKAI_STAR_NAME = ['', '一白水星','二黒土星','三碧木星','四縁木星',
+  '五黄土星','六白金星','七赤金星','八白土星','九紫火星'];
+const KOTEN_STAR_BY_FLIGHT_INDEX = [5,6,7,8,9,1,2,3,4];
+
+function getMonthlyCenterStar_(year, monthIndex0) {
+  // 各暦月の15日を使い、mannen DBの月星をその月の中宮星として読む。
+  // 15日は節入り後なので、暦月の代表値として安全に取得できる。
+  const key = dateKey(year, monthIndex0 + 1, 15);
+  const row = MANNEN_DB[key];
+  return row ? row[3] : null;
+}
+
+function getDoukaiStar_(nenStar, centerStar) {
+  const person = DOUKAI_STAR_NUM[nenStar];
+  const center = DOUKAI_STAR_NUM[centerStar];
+  if (!person || !center) return '―';
+
+  // 中宮星から本人の年命星まで、九星が何宮進んだ位置にいるかを求める。
+  const flightIndex = (person - center + 9) % 9;
+  const kotenNum = KOTEN_STAR_BY_FLIGHT_INDEX[flightIndex];
+  return DOUKAI_STAR_NAME[kotenNum] || '―';
+}
+
+function getMonthlyDoukai_(nenStar, offset) {
+  const now = new Date();
+  const target = new Date(now.getFullYear(), now.getMonth() + offset, 15);
+  const centerStar = getMonthlyCenterStar_(target.getFullYear(), target.getMonth());
+  return {
+    monthLabel: (target.getMonth() + 1) + '月',
+    centerStar: centerStar || '―',
+    doukaiStar: centerStar ? getDoukaiStar_(nenStar, centerStar) : '―'
+  };
+}
+
+// ===== 2026-09-26｜月別運気・第2テスト：文章表示 =====
+// 現段階では、内容確認済みの「五黄土星 × 九紫・一白・二黒」の3組だけ文章化する。
+// その他の組み合わせは、同会星のみ表示して誤った文章を出さない。
+const MONTHLY_UNKI_TEXT_TEST2 = {
+  '五黄土星|九紫火星': '自分の考えが正しいと決めつけると、周りが見えなくなる月です。意地を張って押し通すより、今月は九紫火星の「物事をはっきり見抜く力」を借りてください。何を続け、何をやめるのかを曖昧にしないこと。思い切って整理すると、本当に力を注ぐべきものが見えてきます。',
+  '五黄土星|一白水星': '「自分が何とかしなければ」を一度やめる月です。力で動かそうとするほど、周りとのズレが大きくなります。今月は一白水星の冷静さを借りて、まず聞く、よく見る、そして流れを読む。その方が、結果的にあなたの力を大きく使えます。',
+  '五黄土星|二黒土星': '自分だけで背負い込んで、「自分がやった方が早い」と動くほど、疲れる月です。今月は二黒土星の「待つ力・育てる力」を借りてください。すぐに答えを出さず、人に任せ、失敗する時間も与えること。あなたが全部やるより、周りが動ける場所をつくった方が、結果は大きく育ちます。'
+};
+
+function getMonthlyUnkiTextTest2_(nenStar, doukaiStar) {
+  return MONTHLY_UNKI_TEXT_TEST2[nenStar + '|' + doukaiStar] || '';
+}
+
+function buildMonthlyCardTest2_(label, md, isCurrent, nenStar) {
+  const text = getMonthlyUnkiTextTest2_(nenStar, md.doukaiStar);
+  const body = '<div class="mc-body"><strong>' + md.doukaiStar + 'に同会</strong>' +
+    (text ? '<div style="margin-top:8px; line-height:1.8; text-align:left;">' + text + '</div>' : '') +
+    '</div>';
+  return '<div class="month-card' + (isCurrent ? ' current' : '') + '"><div class="mc-name">' + label + '（' + md.monthLabel + '）</div>' + body + '</div>';
+}
 
 function generateAIText(d) {
   const months = ['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'];
@@ -1038,17 +1101,19 @@ function generateAIText(d) {
   const shigotoText = '生月の干支【' + getsuKanshi + '】から見ると、' + shigotoKikou + 'という傾向があります。この特性を活かして仕事に臨みましょう。';
   document.getElementById('txt-shigoto').textContent = shigotoText;
 
-  // 2026年の運気（本命星）
-  const unki2026 = UNKI_2026[d.nenStar] || '';
-  const unki2026Text = '2026年の' + d.nenStar + 'のあなたは「' + unki2026 + '」の年です。' +
-    'この運気を活かして、新たな一歩を踏み出しましょう。';
+  // 2026年の運気｜第3テスト：本命星の短所＋2026年の同会星の長所
+  const unki2026Text = UNKI_2026[d.nenStar] || '';
   document.getElementById('txt-2026').textContent = unki2026Text;
 
-  // 月別運気（🌸後ほど追加）
+  // 月別運気｜第2テスト：同会計算＋確認済み文章を表示
+  const md0 = getMonthlyDoukai_(d.nenStar, 0);
+  const md1 = getMonthlyDoukai_(d.nenStar, 1);
+  const md2 = getMonthlyDoukai_(d.nenStar, 2);
+
   document.getElementById('monthlyGrid').innerHTML =
-    '<div class="month-card current"><div class="mc-name">今月（' + months[m0] + '）</div><div class="mc-body">🌸 今月の運気 🌸</div></div>' +
-    '<div class="month-card"><div class="mc-name">来月（' + months[m1] + '）</div><div class="mc-body">🌸 来月の運気 🌸</div></div>' +
-    '<div class="month-card"><div class="mc-name">翌々月（' + months[m2] + '）</div><div class="mc-body">🌸 翌々月の運気 🌸</div></div>';
+    buildMonthlyCardTest2_('今月', md0, true, d.nenStar) +
+    buildMonthlyCardTest2_('来月', md1, false, d.nenStar) +
+    buildMonthlyCardTest2_('再来月', md2, false, d.nenStar);
 }
 
 function goBack() {
