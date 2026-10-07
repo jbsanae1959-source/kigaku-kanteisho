@@ -446,6 +446,18 @@ body:has(#kanteishoArea[style*="display: block"]) .menu-return,body:has(#kanteis
 }
 
 </style>
+<script>
+  // 2026-10-07｜仕様確定：Android・iPhoneでは「印刷」「PDF保存」を非表示（PCは変更なし）
+  (function () {
+    if (/Android|iPhone|iPod/i.test(navigator.userAgent || '')) {
+      document.documentElement.classList.add('is-mobile');
+    }
+  })();
+</script>
+<style>
+  /* 2026-10-07｜スマホ（Android・iPhone）では印刷・PDF保存のボタン欄ごと非表示 */
+  html.is-mobile .kt-actions{display:none !important}
+</style>
 </head>
 <body>
 
