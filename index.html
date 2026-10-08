@@ -579,7 +579,28 @@ body:has(#kanteishoArea[style*="display: block"]) .menu-return,body:has(#kanteis
       <div class="text-block">
         <div class="tb-label">月別運気</div>
         <div class="monthly-grid" id="monthlyGrid"></div>
+     <div class="text-block" id="gogyoBalanceBlock">
+  <div class="tb-label">五行バランス</div>
+
+  <div style="display:flex; gap:20px; align-items:flex-start; flex-wrap:wrap;">
+
+    <div style="flex:1; min-width:280px;">
+      <div style="text-align:center; font-weight:500; margin-bottom:6px;">
+        生まれ持った五行バランス
       </div>
+      <div id="gogyoBalanceChart"></div>
+    </div>
+
+    <div style="flex:1; min-width:280px;">
+      <div id="targetGogyoBalanceTitle"
+           style="text-align:center; font-weight:500; margin-bottom:6px;">
+        処理日の五行バランス
+      </div>
+      <div id="targetGogyoBalanceChart"></div>
+    </div>
+
+  </div>
+</div>
     </div>
     <div class="kt-actions">
       <button class="btn-action" onclick="window.print()">🖨 印刷</button>
@@ -972,6 +993,38 @@ async function createKanteisho() {
   `;
 
   // 🌸 文章生成（プレースホルダー）
+  // 生まれ持った五行バランスを集計
+const gogyoBalance = countGogyo([
+  nenKan, nenShi,
+  getsuKan, getsuShi,
+  nichiKan, nichiShi,
+  toki.kan, toki.shi
+]);
+  drawGogyoBalance(gogyoBalance);
+  // 処理日の年干支・月干支を加えた五行バランス
+  const targetKanshi = getTargetDateKanshi();
+  if (targetKanshi) {
+  const title = document.getElementById('targetGogyoBalanceTitle');
+  if (title) {
+    title.textContent =
+      `${targetKanshi.year}年${targetKanshi.month}月${targetKanshi.day}日の五行バランス`;
+  }
+}
+  let targetGogyoBalance = null;
+
+if (targetKanshi) {
+  targetGogyoBalance = countGogyo([
+    nenKan, nenShi,
+    getsuKan, getsuShi,
+    nichiKan, nichiShi,
+    toki.kan, toki.shi,
+    targetKanshi.nenKan, targetKanshi.nenShi,
+    targetKanshi.getsuKan, targetKanshi.getsuShi
+  ]);
+}
+  if (targetGogyoBalance) {
+  drawGogyoBalance(targetGogyoBalance, 'targetGogyoBalanceChart');
+}
   generateAIText({ name, genderStr, dateStr, timeStr,
     nenStar, getsuStar, nichiStar, toki,
     nenKan, getsuKan, getsuShi, nichiKan,
@@ -1269,6 +1322,134 @@ document.addEventListener('DOMContentLoaded', function () {
   }, true);
 });
 </script>
+<script>
+// ===== 生まれ持った五行バランス =====
+function countGogyo(kanShiList) {
+  const gogyoMap = {
+    // 十干
+    '甲':'木', '乙':'木',
+    '丙':'火', '丁':'火',
+    '戊':'土', '己':'土',
+    '庚':'金', '辛':'金',
+    '壬':'水', '癸':'水',
 
+    // 十二支
+    '寅':'木', '卯':'木',
+    '巳':'火', '午':'火',
+    '辰':'土', '戌':'土', '丑':'土', '未':'土',
+    '申':'金', '酉':'金',
+    '亥':'水', '子':'水'
+  };
+
+  const count = {
+    '木': 0,
+    '火': 0,
+    '土': 0,
+    '金': 0,
+    '水': 0
+  };
+
+  kanShiList.forEach(function(char) {
+    const element = gogyoMap[char];
+    if (element) count[element]++;
+  });
+
+  return count;
+}
+// ===== 処理日の年干支・月干支を取得 =====
+// 現在は「今日」を使用。
+// 将来、希望日を指定する場合は targetDate を変更すればよい。
+function getTargetDateKanshi() {
+  const targetDate = new Date();
+
+  const year = targetDate.getFullYear();
+  const month = targetDate.getMonth() + 1;
+  const day = targetDate.getDate();
+
+  const key = dateKey(year, month, day);
+  const db = MANNEN_DB[key];
+
+  if (!db) return null;
+
+  return {
+    year,
+    month,
+    day,
+    nenKan: db[1],
+    nenShi: db[2],
+    getsuKan: db[4],
+    getsuShi: db[5]
+  };
+}
+// 五行バランスのレーダーチャートを描画
+function drawGogyoBalance(gogyo, targetId = 'gogyoBalanceChart') {
+  const target = document.getElementById(targetId);
+  if (!target) return;
+
+  const labels = ['木', '火', '土', '金', '水'];
+  const values = labels.map(label => gogyo[label] || 0);
+
+  const cx = 150;
+  const cy = 145;
+  const maxRadius = 95;
+  const maxValue = 4;
+
+  function point(index, value) {
+    const angle = (-90 + index * 72) * Math.PI / 180;
+    const radius = maxRadius * (value / maxValue);
+    return [
+      cx + Math.cos(angle) * radius,
+      cy + Math.sin(angle) * radius
+    ];
+  }
+
+  function polygonPoints(value) {
+    return labels.map((_, i) => point(i, value).join(',')).join(' ');
+  }
+
+  const dataPoints = labels.map((_, i) => point(i, values[i]).join(',')).join(' ');
+
+  let grid = '';
+  for (let level = 1; level <= maxValue; level++) {
+    grid += `<polygon points="${polygonPoints(level)}"
+      fill="none" stroke="#dddddd" stroke-width="1"/>`;
+  }
+
+  let axes = '';
+  let labelText = '';
+
+  labels.forEach((label, i) => {
+    const outer = point(i, maxValue);
+    const labelPoint = point(i, maxValue + 0.7);
+
+    axes += `<line x1="${cx}" y1="${cy}"
+      x2="${outer[0]}" y2="${outer[1]}"
+      stroke="#e5e5e5" stroke-width="1"/>`;
+
+    labelText += `<text x="${labelPoint[0]}" y="${labelPoint[1]}"
+      text-anchor="middle" dominant-baseline="middle"
+      font-size="16">${label}</text>`;
+
+    const valuePoint = point(i, Math.min(values[i] + 0.35, maxValue + 0.35));
+    labelText += `<text x="${valuePoint[0]}" y="${valuePoint[1]}"
+      text-anchor="middle" dominant-baseline="middle"
+      font-size="12">${values[i]}</text>`;
+  });
+
+  target.innerHTML = `
+    <svg viewBox="0 0 300 290"
+         style="width:100%;max-width:380px;display:block;margin:10px auto;">
+      ${grid}
+      ${axes}
+      <polygon points="${dataPoints}"
+        fill="rgba(139,69,19,0.12)"
+        stroke="#8B4513"
+        stroke-width="3"
+        stroke-linejoin="round"/>
+      ${labelText}
+    </svg>
+  `;
+}
+</script>
 </body>
 </html>
