@@ -458,6 +458,83 @@ body:has(#kanteishoArea[style*="display: block"]) .menu-return,body:has(#kanteis
   /* 2026-10-07｜スマホ（Android・iPhone）では印刷・PDF保存のボタン欄ごと非表示 */
   html.is-mobile .kt-actions{display:none !important}
 </style>
+
+<style id="daiunPrintStyle">
+@media print {
+  @page { size: A4 portrait; margin: 12mm; }
+  #daiunChartBlock { break-inside: avoid !important; page-break-inside: avoid !important; overflow: visible !important; }
+  #daiunChartBlock #daiunChartArea { overflow: visible !important; }
+  #daiunChartBlock svg { width: 100% !important; min-width: 0 !important; height: auto !important; max-height: 92mm !important; }
+  #daiunChartBlock h3, #daiunChartBlock #daiunChartSummary { break-after: avoid !important; }
+  /* PDF用：文章・月別運気を途中で分割しない。画面表示は変更しない */
+  .text-block { break-inside: avoid !important; page-break-inside: avoid !important; }
+  .text-block .tb-label { break-after: avoid !important; page-break-after: avoid !important; }
+  .text-block .tb-body { break-inside: avoid !important; page-break-inside: avoid !important; }
+  .monthly-grid { break-inside: avoid !important; page-break-inside: avoid !important; }
+  .month-card { break-inside: avoid !important; page-break-inside: avoid !important; }
+  .monthly-grid .mc-body { font-size: 11px !important; line-height: 1.55 !important; }
+  .monthly-grid .month-card { padding: 8px 10px !important; }
+  #gogyoBalanceBlock { break-inside: avoid !important; page-break-inside: avoid !important; }
+}
+
+/* 鑑定文章とグラフを分離：画面では連続表示、PDF時はグラフから新ページ */
+.mc-doukai{display:inline;font-size:inherit;color:#534AB7;margin-left:6px}
+@media print{
+  #gogyoBalanceBlock{break-before:page !important;page-break-before:always !important;}
+  #gogyoBalanceBlock, #daiunChartBlock{break-inside:avoid !important;page-break-inside:avoid !important;}
+  .kt-header{padding-top:7px !important;padding-bottom:7px !important;}
+  .kt-body{padding-top:8px !important;padding-bottom:8px !important;}
+  .kt-section-label{margin-top:4px !important;margin-bottom:4px !important;}
+  .kigaku-table th,.kigaku-table td{padding-top:4px !important;padding-bottom:4px !important;}
+  .text-block{margin-bottom:9px !important;}
+  .text-block .tb-label{margin-bottom:3px !important;}
+  .text-block .tb-body{padding:7px 10px !important;font-size:13px !important;line-height:1.5 !important;color:#222222 !important;}
+  .monthly-grid{gap:7px !important;}
+  .monthly-grid .month-card{padding:7px 8px !important;}
+  .monthly-grid .mc-body{font-size:13px !important;line-height:1.4 !important;color:#222222 !important;}
+  .monthly-grid .mc-body div{line-height:1.45 !important;}
+  .monthly-grid .mc-name{font-size:10px !important;}
+}
+</style>
+
+<style id="monthlyVerticalThreeStyle">
+/* 月別運気：今月・来月・再来月を縦3段に */
+.monthly-grid {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) !important;
+  gap: 9px !important;
+}
+.monthly-grid .month-card { min-width: 0; }
+@media print {
+  /* 3段全体を無理に1ページへ固定せず、各月の文章は途中で切らない */
+  .monthly-grid {
+    grid-template-columns: minmax(0, 1fr) !important;
+    break-inside: auto !important;
+    page-break-inside: auto !important;
+    gap: 5px !important;
+  }
+  .monthly-grid .month-card {
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+    padding: 5px 8px !important;
+  }
+  .monthly-grid .mc-name { margin-bottom: 2px !important; }
+  .monthly-grid .mc-body { line-height: 1.4 !important; }
+}
+</style>
+
+<style id="yearMonthChartStyle">
+.fortune-chart-block{margin:20px 0;padding:14px;border:1px solid #c8a48e;border-radius:8px;background:#fffaf5}
+.fortune-chart-block h3{margin:0 0 10px;color:#70442d;font-size:17px}
+.fortune-chart-area{overflow-x:auto}
+.fortune-chart-area svg{min-width:660px}
+.fortune-legend{text-align:center;font-size:12px;margin:5px 0;color:#555}
+@media print{
+.fortune-chart-block{break-inside:avoid!important;page-break-inside:avoid!important;margin:8px 0;padding:7px}
+.fortune-chart-area{overflow:visible!important}
+.fortune-chart-area svg{min-width:0!important;max-height:110mm;width:100%!important;height:auto!important}
+}
+</style>
 </head>
 <body>
 
@@ -579,6 +656,8 @@ body:has(#kanteishoArea[style*="display: block"]) .menu-return,body:has(#kanteis
       <div class="text-block">
         <div class="tb-label">月別運気</div>
         <div class="monthly-grid" id="monthlyGrid"></div>
+      </div>
+      <!-- ここからグラフページ。印刷時のみ新しいページに送る -->
      <div class="text-block" id="gogyoBalanceBlock">
   <div class="tb-label">五行バランス</div>
 
@@ -602,6 +681,27 @@ body:has(#kanteishoArea[style*="display: block"]) .menu-return,body:has(#kanteis
   </div>
 </div>
     </div>
+      <!-- 翔氣塾・五行の食べ物アドバイス -->
+<div id="gogyoFoodAdviceBlock" class="text-block" style="margin-left:12px; margin-right:12px;">
+  <div class="tb-label">あなたの五行と食べ物</div>
+  <div class="tb-body" id="gogyoFoodAdvice"></div>
+</div>
+
+  <!-- 鑑定士専用・大運グラフ追加テスト（既存機能には触れない） -->
+  <section id="daiunChartBlock" style="margin:20px 0;padding:14px;border:1px solid #c8a48e;border-radius:8px;background:#fffaf5;break-inside:avoid;page-break-inside:avoid">
+    <h3 style="margin:0 0 8px;color:#70442d">大運（10年運）・通変星＋十二運</h3>
+    <div id="daiunChartSummary" style="font-size:13px;margin-bottom:8px"></div>
+    <div id="daiunChartArea" style="overflow-x:auto"></div>
+  </section>
+
+<section id="nenunChartBlock" class="fortune-chart-block">
+  <h3>年運・通変星＋十二運＋九星同会</h3>
+  <div id="nenunChartArea" class="fortune-chart-area"></div>
+</section>
+<section id="getsuunChartBlock" class="fortune-chart-block">
+  <h3>月運・通変星＋十二運＋九星同会</h3>
+  <div id="getsuunChartArea" class="fortune-chart-area"></div>
+</section>
     <div class="kt-actions">
       <button class="btn-action" onclick="window.print()">🖨 印刷</button>
       <button class="btn-action primary" onclick="savePDF()">PDF保存</button>
@@ -1025,6 +1125,9 @@ if (targetKanshi) {
   if (targetGogyoBalance) {
   drawGogyoBalance(targetGogyoBalance, 'targetGogyoBalanceChart');
 }
+  renderGogyoFoodAdvice(targetGogyoBalance);
+  renderDaiunTest({year, month, day, gender, nenKan, getsuKan, getsuShi, nichiKan});
+  renderNenGetsuUnTest({nichiKan,nenStar});
   generateAIText({ name, genderStr, dateStr, timeStr,
     nenStar, getsuStar, nichiStar, toki,
     nenKan, getsuKan, getsuShi, nichiKan,
@@ -1186,10 +1289,10 @@ function getMonthlyUnkiTextTest2_(nenStar, doukaiStar) {
 
 function buildMonthlyCardTest2_(label, md, isCurrent, nenStar) {
   const text = getMonthlyUnkiTextTest2_(nenStar, md.doukaiStar);
-  const body = '<div class="mc-body"><strong>' + md.doukaiStar + 'に同会</strong>' +
-    (text ? '<div style="margin-top:8px; line-height:1.8; text-align:left;">' + text + '</div>' : '') +
+  const body = '<div class="mc-body">' +
+    (text ? '<div style="line-height:1.8; text-align:left;">' + text + '</div>' : '') +
     '</div>';
-  return '<div class="month-card' + (isCurrent ? ' current' : '') + '"><div class="mc-name">' + label + '（' + md.monthLabel + '）</div>' + body + '</div>';
+  return '<div class="month-card' + (isCurrent ? ' current' : '') + '"><div class="mc-name">' + label + '（' + md.monthLabel + '） <span class="mc-doukai">' + md.doukaiStar + 'に同会</span></div>' + body + '</div>';
 }
 
 function generateAIText(d) {
@@ -1356,6 +1459,42 @@ function countGogyo(kanShiList) {
 
   return count;
 }
+// ===== 翔氣塾・五行の食べ物アドバイス =====
+function renderGogyoFoodAdvice(gogyo) {
+  const target = document.getElementById('gogyoFoodAdvice');
+  if (!target) return;
+
+  if (!gogyo) {
+    target.textContent = '五行データを取得できませんでした。';
+    return;
+  }
+
+  const foodDict = {
+    '木': { color: '青・緑', taste: '酸味', foods: '春菊、小松菜、ほうれん草、ブロッコリー、かぶの葉' },
+    '火': { color: '赤', taste: '苦味', foods: '小豆、トマト、りんご、人参、赤パプリカ' },
+    '土': { color: '黄', taste: '甘味', foods: 'かぼちゃ、さつまいも、里芋、舞茸' },
+    '金': { color: '白', taste: '辛味', foods: '大根、白菜、長ネギ、カブ' },
+    '水': { color: '黒', taste: '塩味', foods: '黒豆、黒ゴマ、ひじき、ワカメ、昆布' }
+  };
+
+  const elements = ['木', '火', '土', '金', '水'];
+  const maxValue = Math.max(...elements.map(e => gogyo[e] || 0));
+  const strongest = elements.filter(e => (gogyo[e] || 0) === maxValue);
+  const names = strongest.join('・');
+  const foods = strongest.map(e => {
+    const d = foodDict[e];
+    return `${e}（${d.color}・${d.taste}）：${d.foods}`;
+  });
+
+  target.textContent =
+    `今は${names}の力が強く表れています。` +
+    `強い力を使い続けるだけでなく、周囲に分け、自分自身をいたわる時間も大切にしましょう。\n` +
+    `五行に対応する食べ物の例：\n${foods.join('\n')}\n` +
+    `食事は無理なく、さまざまな食材を組み合わせて楽しみましょう。`;
+
+  target.style.whiteSpace = 'pre-line';
+}
+
 // ===== 処理日の年干支・月干支を取得 =====
 // 現在は「今日」を使用。
 // 将来、希望日を指定する場合は targetDate を変更すればよい。
@@ -1449,6 +1588,112 @@ function drawGogyoBalance(gogyo, targetId = 'gogyoBalanceChart') {
       ${labelText}
     </svg>
   `;
+}
+
+// ===== 鑑定士専用：大運グラフ・テスト版 =====
+const DAIUN_KAN = [...'甲乙丙丁戊己庚辛壬癸'];
+const DAIUN_SHI = [...'子丑寅卯辰巳午未申酉戌亥'];
+const DAIUN_TSUHEN_P = {'比肩':1,'劫財':0,'食神':3,'傷官':0,'偏財':3,'正財':3,'偏官':1,'正官':3,'偏印':1,'印綬':3};
+const DAIUN_JUNIIN_P = {'胎':1,'養':1,'長生':2,'沐浴':3,'冠帯':3,'建禄':3,'帝旺':3,'衰':0,'病':0,'死':0,'墓':1,'絶':0};
+function daiunBirthSekkiDay_(year,month,day,kan,shi) {
+  // 万年暦の月干支が切り替わった日を節入り日とする。節入り当日＝1日目。
+  const birth = new Date(year,month-1,day);
+  for(let delta=0;delta<=35;delta++) {
+    const d=new Date(year,month-1,day-delta);
+    const row=MANNEN_DB[dateKey(d.getFullYear(),d.getMonth()+1,d.getDate())];
+    if(!row || row[4]!==kan || row[5]!==shi) return delta;
+  }
+  return null;
+}
+function renderDaiunTest_(unused) {} // 名前衝突防止用
+function renderDaiunTest({year,month,day,gender,nenKan,getsuKan,getsuShi,nichiKan}) {
+  const summary=document.getElementById('daiunChartSummary');
+  const area=document.getElementById('daiunChartArea');
+  if(!summary || !area) return;
+  const days=daiunBirthSekkiDay_(year,month,day,getsuKan,getsuShi);
+  if(days===null || days<1) {summary.textContent='節入り日を万年暦から確定できません。';area.replaceChildren();return;}
+  const q=Math.floor(days/3), r=days%3, kiun=q+(r===2?1:0);
+  const yang=DAIUN_KAN.indexOf(nenKan)%2===0;
+  const forward=(gender==='male')===yang;
+  const cycle=Array.from({length:60},(_,i)=>DAIUN_KAN[i%10]+DAIUN_SHI[i%12]);
+  const start=cycle.indexOf(getsuKan+getsuShi);
+  if(start<0){summary.textContent='生月干支を確認できません。';return;}
+  const rows=Array.from({length:10},(_,i)=>{
+    const kanshi=cycle[(start+(forward?i:-i)+600)%60];
+    const tsuhen=getTsuhen(nichiKan,kanshi[0]);
+    const juniin=getJuniin(nichiKan,kanshi[1]);
+    return {age:i===0?`生〜${kiun}歳`:`${kiun+1+(i-1)*10}〜${kiun+i*10}歳`,kanshi,tsuhen,juniin,tp:DAIUN_TSUHEN_P[tsuhen],jp:DAIUN_JUNIIN_P[juniin]};
+  });
+  summary.textContent=`節入りから${days}日目 ／ 起運${kiun}歳 ／ ${forward?'順運':'逆運'} ／ 生月干支 ${getsuKan+getsuShi}`;
+  const valid=rows.every(r=>Number.isFinite(r.tp)&&Number.isFinite(r.jp));
+  if(!valid){area.textContent='通変星・十二運のポイントが未定義のため、グラフを描けません。';return;}
+  const W=730,H=292,left=42,bottom=185,unit=22,bar=42,gap=26;
+  let svg=`<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="大運の積み上げ棒グラフ。棒の下に年齢、干支、十二運、通変星を表示" style="width:100%;min-width:640px;display:block">`;
+  for(let n=0;n<=6;n+=2){const y=bottom-n*unit;svg+=`<line x1="${left}" x2="${W-5}" y1="${y}" y2="${y}" stroke="#ddd"/><text x="${left-9}" y="${y+4}" text-anchor="end" font-size="11">${n}</text>`;}
+  rows.forEach((r,i)=>{const x=left+10+i*(bar+gap),y1=bottom-r.tp*unit,y2=y1-r.jp*unit;
+    svg+=`<rect x="${x}" y="${y1}" width="${bar}" height="${r.tp*unit}" fill="#b8a0cc"/><rect x="${x}" y="${y2}" width="${bar}" height="${r.jp*unit}" fill="#e9b089"/>`;
+    const mid=x+bar/2;
+    svg+=`<text x="${mid}" y="${bottom+16}" text-anchor="middle" font-size="10">${r.age.replace('歳','')}</text>`;
+    svg+=`<text x="${mid}" y="${bottom+33}" text-anchor="middle" font-size="11">${r.kanshi}</text>`;
+    svg+=`<text x="${mid}" y="${bottom+52}" text-anchor="middle" font-size="11">${r.juniin}</text>`;
+    svg+=`<text x="${mid}" y="${bottom+70}" text-anchor="middle" font-size="11">${r.tsuhen}</text>`;
+  });
+  svg+='</svg>';
+  area.innerHTML=svg;
+}
+
+</script>
+<script>
+// ===== 鑑定士専用：年運・月運グラフ（万年暦を利用）=====
+const UN_DOUKAI_POWER={'一白水星':1,'二黒土星':6,'三碧木星':7,'四緑木星':8,'四縁木星':8,'五黄土星':9,'六白金星':5,'七赤金星':4,'八白土星':3,'九紫火星':2};
+function unChartRows_(nichiKan,nenStar,kind){
+  const now=new Date(), rows=[];
+  const total=kind==='year'?11:12;
+  for(let i=0;i<total;i++){
+    const y=kind==='year'?now.getFullYear()+i:now.getFullYear();
+    const dt=kind==='year'?new Date(y,5,15):new Date(now.getFullYear(),now.getMonth()+i,15);
+    const yr=dt.getFullYear(), mo=dt.getMonth()+1;
+    // 年は立春後の6月15日、月は節入り後の15日の万年暦値を参照。
+    const db=MANNEN_DB[dateKey(yr,mo,15)];
+    if(!db){rows.push({label:kind==='year'?`${yr}年`:`${yr}/${mo}`,missing:true});continue;}
+    const kan=kind==='year'?db[1]:db[4], shi=kind==='year'?db[2]:db[5];
+    const center=kind==='year'?db[0]:db[3];
+    const doukai=getDoukaiStar_(nenStar,center);
+    const tsuhen=getTsuhen(nichiKan,kan),juniin=getJuniin(nichiKan,shi);
+    const tp=DAIUN_TSUHEN_P[tsuhen],jp=DAIUN_JUNIIN_P[juniin],power=UN_DOUKAI_POWER[doukai];
+    rows.push({label:kind==='year'?`${yr}年`:`${yr}/${mo}`,kanshi:kan+shi,tsuhen,juniin,tp,jp,doukai,power,
+      missing:![tp,jp,power].every(Number.isFinite)});
+  }
+  return rows;
+}
+function renderUnChart_(targetId,rows){
+  const target=document.getElementById(targetId);if(!target)return;
+  const valid=rows.filter(r=>!r.missing);
+  if(!valid.length){target.textContent='表示可能な万年暦データがありません。';return;}
+  const N=rows.length,W=Math.max(770,N*70+45),H=328,L=38,B=205,step=(W-L-10)/N,bw=Math.min(40,step*.63),scale=19;
+  let svg=`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" role="img" aria-label="通変星と十二運の積み上げ棒、九星同会の折れ線" style="width:100%;display:block">`;
+  for(let n=0;n<=9;n+=3){let y=B-n*scale;svg+=`<line x1="${L}" x2="${W-8}" y1="${y}" y2="${y}" stroke="#ddd"/><text x="${L-8}" y="${y+4}" text-anchor="end" font-size="11">${n}</text>`;}
+  let points=[],segments=[];
+  rows.forEach((r,i)=>{
+    const x=L+step*(i+.5), bx=x-bw/2;
+    if(r.missing){svg+=`<text x="${x}" y="${B-12}" font-size="10" text-anchor="middle">―</text>`;points.push(null);}
+    else{
+      svg+=`<rect x="${bx}" y="${B-r.tp*scale}" width="${bw}" height="${r.tp*scale}" fill="#b8a0cc"/>`;
+      svg+=`<rect x="${bx}" y="${B-(r.tp+r.jp)*scale}" width="${bw}" height="${r.jp*scale}" fill="#e9b089"/>`;
+      points.push([x,B-r.power*scale]);
+    }
+    const lines=[r.label,r.kanshi||'―',r.juniin||'―',r.tsuhen||'―'];
+    lines.forEach((t,j)=>{svg+=`<text x="${x}" y="${B+18+j*20}" text-anchor="middle" font-size="${j===0?10:11}">${t}</text>`;});
+  });
+  points.forEach((p,i)=>{if(!p)return;svg+=`<circle cx="${p[0]}" cy="${p[1]}" r="3.5" fill="#527e9c"/>`;if(i>0&&points[i-1])svg+=`<line x1="${points[i-1][0]}" y1="${points[i-1][1]}" x2="${p[0]}" y2="${p[1]}" stroke="#527e9c" stroke-width="2.4"/>`;});
+  svg+='</svg>';
+  target.innerHTML=svg+'<div class="fortune-legend"><span style="color:#9573b2">■</span> 通変星　<span style="color:#d99869">■</span> 十二運　<span style="color:#527e9c">━</span> 九星同会</div>';
+  const missing=rows.filter(r=>r.missing);
+  if(missing.length)target.insertAdjacentHTML('beforeend','<p style="font-size:12px;color:#9b5d3e">※万年暦の範囲外・未定義の期間は「―」と表示しています。</p>');
+}
+function renderNenGetsuUnTest({nichiKan,nenStar}){
+  renderUnChart_('nenunChartArea',unChartRows_(nichiKan,nenStar,'year'));
+  renderUnChart_('getsuunChartArea',unChartRows_(nichiKan,nenStar,'month'));
 }
 </script>
 </body>
