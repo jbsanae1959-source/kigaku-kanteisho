@@ -1053,8 +1053,10 @@ async function createKanteisho() {
   const timeStr   = jikanVal !== '' ? jikanVal + ':00〜' : '生時不明';
   const genderStr = gender === 'female' ? '女性' : '男性';
   const dateStr   = `${year}年${month}月${day}日`;
-
-  document.getElementById('kt-name').textContent = `${name} 様`;
+  const today = new Date();
+  let age = today.getFullYear() - year;
+  if (today.getMonth() + 1 < month || (today.getMonth() + 1 === month && today.getDate() < day)) age--;
+  document.getElementById('kt-name').textContent = `${name} 様（${genderStr}・${age}歳）`;
   document.getElementById('kt-meta').textContent = `${dateStr}生　${timeStr}　${genderStr}`;
 
   // 鑑定表
